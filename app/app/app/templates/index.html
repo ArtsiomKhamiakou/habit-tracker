@@ -6,29 +6,16 @@
 </head>
 <body>
     <div class="container">
-        <h1>🏆 Habit Tracker</h1>
-        
-        <div class="add-habit-form">
-            <h2>Добавить привычку</h2>
-            <form id="habit-form">
-                <input type="text" id="habit-name" placeholder="Название привычки" required>
-                <textarea id="habit-description" placeholder="Описание (необязательно)"></textarea>
-                <select id="habit-category">
-                    <option value="general">Общая</option>
-                    <option value="health">Здоровье</option>
-                    <option value="work">Работа</option>
-                    <option value="learning">Обучение</option>
-                </select>
-                <button type="submit">➕ Добавить</button>
-            </form>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>🏆 Habit Tracker</h1>
+            <button id="theme-toggle" style="
+                background: white;
+                border: none;
+                font-size: 1.5rem;
+                cursor: pointer;
+                padding: 0.5rem 1rem;
+                border-radius: 8px;
+            ">🌙</button>
         </div>
         
-        <h2>Мои привычки</h2>
-        <div id="habits-list">
-            <p>Загрузка...</p>
-        </div>
-    </div>
-    
-    <script src="/static/js/app.js"></script>
-</body>
-</html>
+        <div class="add-habit
