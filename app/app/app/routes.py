@@ -17,8 +17,23 @@ def create_habit():
 
 @app.route('/api/habits/<int:habit_id>', methods=['GET'])
 def get_habit(habit_id):
-    """Получить одну привычку по ID"""
     habit = Habit.query.get(habit_id)
     if habit is None:
         return jsonify({'error': 'Habit not found'}), 404
-    return jsonify(habit.to_dict())
+    return jsonify({'id': habit.id, 'name': habit.name})
+
+@app.route('/api/habits/<int:habit_id>', methods=['PUT'])
+def update_habit(habit_id):
+    habit = Habit.query.get(habit_id)
+    if habit is None:
+        return jsonify({'error': 'Habit not found'}), 404
+    
+    data = request.get_json()
+    
+    if 'name' in data:
+        habit.name = data['name']
+    if 'description' in data:
+        habit.description = data['description']
+    
+    db.session.commit()
+    return jsonify({'id': habit.id, 'name': habit.name, 'description': habit.description})
