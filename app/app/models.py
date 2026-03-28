@@ -10,3 +10,10 @@ class Habit(db.Model):
     category = db.Column(db.String(50), default='general')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     streak = db.Column(db.Integer, default=0)
+    
+    def complete(self):
+        """Отметить привычку как выполненную"""
+        from datetime import date
+        today = date.today()
+        self.streak += 1
+        return True
