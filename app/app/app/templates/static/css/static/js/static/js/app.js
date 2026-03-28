@@ -1,17 +1,90 @@
 document.addEventListener('DOMContentLoaded', () => {
     loadHabits();
-    setupFormHandler();
+    setupModal();
     setupThemeToggle();
 });
+
+let currentModal = null;
+
+function setupModal() {
+    const modal = document.getElementById('habit-modal');
+    const openBtn = document.getElementById('open-modal-btn');
+    const closeBtn = document.querySelector('.close-btn');
+    const form = document.getElementById('habit-form');
+    
+    currentModal = modal;
+    
+    if (openBtn) {
+        openBtn.onclick = () => {
+            modal.style.display = 'flex';
+        };
+    }
+    
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+    }
+    
+    window.onclick = (event) => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
+    
+    if (form) {
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const habit = {
+                name: document.getElementById('habit-name').value,
+                description: document.getElementById('habit-description').value,
+                category: document.getElementById('habit-category').value
+            };
+            
+            if (!habit.name.trim()) {
+                showNotification('Введите название привычки', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/habits', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(habit)
+                });
+                
+                if (response.ok) {
+                    form.reset();
+                    modal.style.display = 'none';
+                    loadHabits();
+                    showNotification('✅ Привычка добавлена!', 'success');
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || 'Ошибка при добавлении', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('❌ Не удалось добавить привычку', 'error');
+            }
+        };
+    }
+}
 
 async function loadHabits() {
     try {
         const response = await fetch('/api/habits');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
         const habits = await response.json();
         displayHabits(habits);
     } catch (error) {
         console.error('Error loading habits:', error);
-        document.getElementById('habits-list').innerHTML = '<p>Ошибка загрузки</p>';
+        document.getElementById('habits-list').innerHTML = '<p>❌ Ошибка загрузки привычек</p>';
+        showNotification('Не удалось загрузить привычки', 'error');
     }
 }
 
@@ -19,14 +92,14 @@ function displayHabits(habits) {
     const container = document.getElementById('habits-list');
     
     if (habits.length === 0) {
-        container.innerHTML = '<p>Нет привычек. Добавьте первую!</p>';
+        container.innerHTML = '<p>✨ Нет привычек. Нажмите "Новая привычка" чтобы добавить!</p>';
         return;
     }
     
     container.innerHTML = habits.map(habit => `
         <div class="habit-card" data-id="${habit.id}">
             <h3>${escapeHtml(habit.name)}</h3>
-            <span class="category">${habit.category || 'general'}</span>
+            <span class="category">${escapeHtml(habit.category || 'general')}</span>
             <div class="streak">🔥 Серия: ${habit.streak || 0} дней</div>
             ${habit.description ? `<p>${escapeHtml(habit.description)}</p>` : ''}
             <div class="actions">
@@ -43,40 +116,6 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function setupFormHandler() {
-    const form = document.getElementById('habit-form');
-    if (form) {
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            
-            const habit = {
-                name: document.getElementById('habit-name').value,
-                description: document.getElementById('habit-description').value,
-                category: document.getElementById('habit-category').value
-            };
-            
-            try {
-                const response = await fetch('/api/habits', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(habit)
-                });
-                
-                if (response.ok) {
-                    form.reset();
-                    loadHabits();
-                    showNotification('Привычка добавлена!', 'success');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('Ошибка при добавлении', 'error');
-            }
-        };
-    }
-}
-
 async function completeHabit(id) {
     try {
         const response = await fetch(`/api/habits/${id}/complete`, {
@@ -91,13 +130,14 @@ async function completeHabit(id) {
             loadHabits();
             showNotification(`✅ Выполнено! Серия: ${result.streak} дней`, 'success');
         } else if (response.status === 404) {
-            showNotification('Привычка не найдена', 'error');
+            showNotification('❌ Привычка не найдена', 'error');
         } else {
-            showNotification('Ошибка при выполнении', 'error');
+            const error = await response.json();
+            showNotification(error.error || 'Ошибка при выполнении', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        showNotification('Не удалось отметить привычку', 'error');
+        showNotification('❌ Не удалось отметить привычку', 'error');
     }
 }
 
@@ -113,15 +153,16 @@ async function deleteHabit(id) {
         
         if (response.ok) {
             loadHabits();
-            showNotification('Привычка удалена', 'success');
+            showNotification('🗑️ Привычка удалена', 'success');
         } else if (response.status === 404) {
-            showNotification('Привычка не найдена', 'error');
+            showNotification('❌ Привычка не найдена', 'error');
         } else {
-            showNotification('Ошибка при удалении', 'error');
+            const error = await response.json();
+            showNotification(error.error || 'Ошибка при удалении', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        showNotification('Не удалось удалить привычку', 'error');
+        showNotification('❌ Не удалось удалить привычку', 'error');
     }
 }
 
@@ -147,6 +188,7 @@ function showNotification(message, type = 'info') {
         font-weight: bold;
         z-index: 2000;
         animation: slideIn 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     `;
     
     document.body.appendChild(notification);
@@ -174,3 +216,30 @@ function setupThemeToggle() {
         themeBtn.textContent = isDark ? '☀️' : '🌙';
     };
 }
+
+// Добавляем анимации в CSS (добавим в следующем коммите)
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
