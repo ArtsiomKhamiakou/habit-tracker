@@ -37,3 +37,13 @@ def update_habit(habit_id):
     
     db.session.commit()
     return jsonify({'id': habit.id, 'name': habit.name, 'description': habit.description})
+
+@app.route('/api/habits/<int:habit_id>', methods=['DELETE'])
+def delete_habit(habit_id):
+    habit = Habit.query.get(habit_id)
+    if habit is None:
+        return jsonify({'error': 'Habit not found'}), 404
+    
+    db.session.delete(habit)
+    db.session.commit()
+    return jsonify({'message': 'Habit deleted successfully'})
