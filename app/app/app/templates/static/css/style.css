@@ -9,6 +9,11 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     padding: 2rem;
+    transition: background 0.3s;
+}
+
+body.dark {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
 }
 
 .container {
@@ -34,12 +39,21 @@ h2 {
     border-radius: 12px;
     margin-bottom: 2rem;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: background 0.3s;
+}
+
+body.dark .add-habit-form {
+    background: #374151;
 }
 
 .add-habit-form h2 {
     color: #333;
     margin-top: 0;
     margin-bottom: 1rem;
+}
+
+body.dark .add-habit-form h2 {
+    color: #f3f4f6;
 }
 
 .add-habit-form input,
@@ -51,6 +65,15 @@ h2 {
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 1rem;
+    transition: background 0.3s, color 0.3s;
+}
+
+body.dark .add-habit-form input,
+body.dark .add-habit-form textarea,
+body.dark .add-habit-form select {
+    background: #1f2937;
+    color: #f3f4f6;
+    border-color: #4b5563;
 }
 
 .add-habit-form button {
@@ -75,7 +98,11 @@ h2 {
     padding: 1.5rem;
     margin-bottom: 1rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
+    transition: transform 0.2s, background 0.3s;
+}
+
+body.dark .habit-card {
+    background: #374151;
 }
 
 .habit-card:hover {
@@ -89,6 +116,10 @@ h2 {
     font-size: 1.25rem;
 }
 
+body.dark .habit-card h3 {
+    color: #f9fafb;
+}
+
 .habit-card .category {
     display: inline-block;
     background: #e0e7ff;
@@ -97,6 +128,11 @@ h2 {
     border-radius: 20px;
     font-size: 0.875rem;
     margin-bottom: 0.75rem;
+}
+
+body.dark .habit-card .category {
+    background: #4f46e5;
+    color: #e0e7ff;
 }
 
 .habit-card .streak {
@@ -108,6 +144,10 @@ h2 {
 .habit-card p {
     color: #666;
     margin: 0.5rem 0;
+}
+
+body.dark .habit-card p {
+    color: #d1d5db;
 }
 
 .habit-card .actions {
@@ -142,4 +182,30 @@ h2 {
 
 .habit-card button:last-child:hover {
     background: #dc2626;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 1rem;
+    }
+    
+    h1 {
+        font-size: 1.75rem;
+    }
+    
+    h2 {
+        font-size: 1.25rem;
+    }
+    
+    .habit-card {
+        padding: 1rem;
+    }
+    
+    .habit-card .actions {
+        flex-direction: column;
+    }
+    
+    .habit-card button {
+        width: 100%;
+    }
 }
