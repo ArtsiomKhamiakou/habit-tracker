@@ -2,11 +2,33 @@
 <html>
 <head>
     <title>Habit Tracker</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <h1>Habit Tracker</h1>
-    <div id="app">
-        <p>Loading...</p>
+    <div class="container">
+        <h1>🏆 Habit Tracker</h1>
+        
+        <div class="add-habit-form">
+            <h2>Добавить привычку</h2>
+            <form id="habit-form">
+                <input type="text" id="habit-name" placeholder="Название привычки" required>
+                <textarea id="habit-description" placeholder="Описание (необязательно)"></textarea>
+                <select id="habit-category">
+                    <option value="general">Общая</option>
+                    <option value="health">Здоровье</option>
+                    <option value="work">Работа</option>
+                    <option value="learning">Обучение</option>
+                </select>
+                <button type="submit">➕ Добавить</button>
+            </form>
+        </div>
+        
+        <h2>Мои привычки</h2>
+        <div id="habits-list">
+            <p>Загрузка...</p>
+        </div>
     </div>
+    
+    <script src="/static/js/app.js"></script>
 </body>
 </html>
