@@ -14,3 +14,11 @@ def create_habit():
     db.session.add(habit)
     db.session.commit()
     return jsonify({'id': habit.id}), 201
+
+@app.route('/api/habits/<int:habit_id>', methods=['GET'])
+def get_habit(habit_id):
+    """Получить одну привычку по ID"""
+    habit = Habit.query.get(habit_id)
+    if habit is None:
+        return jsonify({'error': 'Habit not found'}), 404
+    return jsonify(habit.to_dict())
