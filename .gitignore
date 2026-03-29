@@ -1,7 +1,42 @@
+# Виртуальное окружение
 venv/
+env/
+ENV/
+
+# Python
 __pycache__/
-*.pyc
-.env
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Базы данных
 *.db
-.DS_Store
+*.sqlite
+*.sqlite3
+
+# Переменные окружения
+.env
+.env.local
+.env.production
+
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+
+# Логи
+*.log
+*.pid
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Покрытие тестов
+.coverage
+htmlcov/
+.pytest_cache/
