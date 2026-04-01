@@ -3,6 +3,7 @@
 <head>
     <title>Habit Tracker</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -33,10 +34,30 @@
             transition: transform 0.2s;
         ">➕ Новая привычка</button>
         
+        <!-- Блок статистики -->
+        <div id="stats-container" style="margin-bottom: 2rem;"></div>
+        
+        <!-- Кнопка ОЧИСТИТЬ ВСЕ -->
+        <button id="clear-all-btn" style="
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        " onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+            🗑️ Очистить все привычки
+        </button>
+        
         <h2>Мои привычки</h2>
         <div id="habits-list">
             <p>Загрузка...</p>
         </div>
+        
+        <div id="pagination" style="margin-top: 2rem; text-align: center;"></div>
     </div>
     
     <!-- Модальное окно -->
