@@ -358,3 +358,11 @@ body.dark .modal-content select {
         opacity: 1;
     }
 }
+function showSkeletonLoader() {
+    const container = document.getElementById('habits-list');
+    container.innerHTML = `
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+    `;
+}
