@@ -1,18 +1,90 @@
 document.addEventListener('DOMContentLoaded', () => {
     loadHabits();
+    loadStats();
     setupModal();
     setupThemeToggle();
+    setupClearAllButton();
 });
 
-let currentModal = null;
+let currentPage = 1;
+let allHabits = [];
+
+async function loadHabits(page = 1) {
+    currentPage = page;
+    try {
+        const response = await fetch(`/api/habits?page=${page}&per_page=10`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        allHabits = data.items || data;
+        displayHabits(allHabits);
+        displayPagination(data);
+    } catch (error) {
+        console.error('Error loading habits:', error);
+        document.getElementById('habits-list').innerHTML = '<p>❌ Ошибка загрузки привычек</p>';
+        showNotification('Не удалось загрузить привычки', 'error');
+    }
+}
+
+function displayHabits(habits) {
+    const container = document.getElementById('habits-list');
+    
+    if (!habits || habits.length === 0) {
+        container.innerHTML = '<p>✨ Нет привычек. Нажмите "Новая привычка" чтобы добавить!</p>';
+        return;
+    }
+    
+    container.innerHTML = habits.map(habit => `
+        <div class="habit-card" data-id="${habit.id}">
+            <h3>${escapeHtml(habit.name)}</h3>
+            <span class="category">${escapeHtml(habit.category || 'general')}</span>
+            <div class="streak">🔥 Серия: ${habit.streak || 0} дней</div>
+            ${habit.description ? `<p>${escapeHtml(habit.description)}</p>` : ''}
+            <div class="actions">
+                <button onclick="completeHabit(${habit.id})">✅ Выполнено</button>
+                <button onclick="deleteHabit(${habit.id})">🗑️ Удалить</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function displayPagination(data) {
+    const paginationContainer = document.getElementById('pagination');
+    if (!paginationContainer) return;
+    
+    if (!data.pages || data.pages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    let html = '<div class="pagination">';
+    
+    if (data.page > 1) {
+        html += `<button onclick="loadHabits(${data.page - 1})">← Назад</button>`;
+    }
+    
+    html += `<span>Страница ${data.page} из ${data.pages}</span>`;
+    
+    if (data.page < data.pages) {
+        html += `<button onclick="loadHabits(${data.page + 1})">Вперед →</button>`;
+    }
+    
+    html += '</div>';
+    paginationContainer.innerHTML = html;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
 function setupModal() {
     const modal = document.getElementById('habit-modal');
     const openBtn = document.getElementById('open-modal-btn');
     const closeBtn = document.querySelector('.close-btn');
     const form = document.getElementById('habit-form');
-    
-    currentModal = modal;
     
     if (openBtn) {
         openBtn.onclick = () => {
@@ -60,6 +132,7 @@ function setupModal() {
                     form.reset();
                     modal.style.display = 'none';
                     loadHabits();
+                    loadStats();
                     showNotification('✅ Привычка добавлена!', 'success');
                 } else {
                     const error = await response.json();
@@ -71,49 +144,6 @@ function setupModal() {
             }
         };
     }
-}
-
-async function loadHabits() {
-    try {
-        const response = await fetch('/api/habits');
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const habits = await response.json();
-        displayHabits(habits);
-    } catch (error) {
-        console.error('Error loading habits:', error);
-        document.getElementById('habits-list').innerHTML = '<p>❌ Ошибка загрузки привычек</p>';
-        showNotification('Не удалось загрузить привычки', 'error');
-    }
-}
-
-function displayHabits(habits) {
-    const container = document.getElementById('habits-list');
-    
-    if (habits.length === 0) {
-        container.innerHTML = '<p>✨ Нет привычек. Нажмите "Новая привычка" чтобы добавить!</p>';
-        return;
-    }
-    
-    container.innerHTML = habits.map(habit => `
-        <div class="habit-card" data-id="${habit.id}">
-            <h3>${escapeHtml(habit.name)}</h3>
-            <span class="category">${escapeHtml(habit.category || 'general')}</span>
-            <div class="streak">🔥 Серия: ${habit.streak || 0} дней</div>
-            ${habit.description ? `<p>${escapeHtml(habit.description)}</p>` : ''}
-            <div class="actions">
-                <button onclick="completeHabit(${habit.id})">✅ Выполнено</button>
-                <button onclick="deleteHabit(${habit.id})">🗑️ Удалить</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 async function completeHabit(id) {
@@ -128,6 +158,7 @@ async function completeHabit(id) {
         if (response.ok) {
             const result = await response.json();
             loadHabits();
+            loadStats();
             showNotification(`✅ Выполнено! Серия: ${result.streak} дней`, 'success');
         } else if (response.status === 404) {
             showNotification('❌ Привычка не найдена', 'error');
@@ -153,6 +184,7 @@ async function deleteHabit(id) {
         
         if (response.ok) {
             loadHabits();
+            loadStats();
             showNotification('🗑️ Привычка удалена', 'success');
         } else if (response.status === 404) {
             showNotification('❌ Привычка не найдена', 'error');
@@ -217,7 +249,83 @@ function setupThemeToggle() {
     };
 }
 
-// Добавляем анимации в CSS (добавим в следующем коммите)
+async function loadStats() {
+    try {
+        const response = await fetch('/api/stats');
+        if (response.ok) {
+            const stats = await response.json();
+            displayStats(stats);
+        }
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+function displayStats(stats) {
+    const statsContainer = document.getElementById('stats-container');
+    if (!statsContainer) return;
+    
+    statsContainer.innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">${stats.total_habits || 0}</div>
+                <div class="stat-label">Всего привычек</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.total_streak || 0}</div>
+                <div class="stat-label">Всего дней</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.completed_today || 0}</div>
+                <div class="stat-label">Выполнено сегодня</div>
+            </div>
+        </div>
+    `;
+}
+
+// Функция для кнопки "Очистить все привычки"
+function setupClearAllButton() {
+    const clearBtn = document.getElementById('clear-all-btn');
+    if (!clearBtn) return;
+    
+    clearBtn.addEventListener('click', async () => {
+        const confirmed = confirm('⚠️ ВНИМАНИЕ! Вы уверены, что хотите удалить ВСЕ привычки?\n\nЭто действие нельзя отменить!');
+        
+        if (!confirmed) return;
+        
+        showNotification('🗑️ Удаление всех привычек...', 'info');
+        
+        try {
+            const response = await fetch('/api/habits');
+            const habits = await response.json();
+            
+            if (habits.length === 0) {
+                showNotification('✨ Нет привычек для удаления', 'info');
+                return;
+            }
+            
+            let deleted = 0;
+            for (const habit of habits) {
+                const deleteResponse = await fetch(`/api/habits/${habit.id}`, {
+                    method: 'DELETE'
+                });
+                if (deleteResponse.ok) {
+                    deleted++;
+                }
+            }
+            
+            loadHabits();
+            loadStats();
+            showNotification(`✅ Удалено ${deleted} привычек`, 'success');
+            
+        } catch (error) {
+            console.error('Error clearing habits:', error);
+            showNotification('❌ Ошибка при удалении привычек', 'error');
+        }
+    });
+}
+
+// Добавляем стили для анимаций
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideIn {
@@ -243,126 +351,3 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-/* Модальное окно */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    animation: fadeIn 0.3s ease;
-}
-
-.modal-content {
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 500px;
-    position: relative;
-    animation: slideUp 0.3s ease;
-}
-
-body.dark .modal-content {
-    background: #374151;
-}
-
-.close-btn {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: #666;
-    transition: color 0.2s;
-}
-
-.close-btn:hover {
-    color: #000;
-}
-
-body.dark .close-btn {
-    color: #9ca3af;
-}
-
-body.dark .close-btn:hover {
-    color: #fff;
-}
-
-.modal-content h2 {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    color: #333;
-}
-
-body.dark .modal-content h2 {
-    color: #f3f4f6;
-}
-
-.modal-content input,
-.modal-content textarea,
-.modal-content select {
-    width: 100%;
-    padding: 0.75rem;
-    margin-bottom: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-}
-
-body.dark .modal-content input,
-body.dark .modal-content textarea,
-body.dark .modal-content select {
-    background: #1f2937;
-    color: #f3f4f6;
-    border-color: #4b5563;
-}
-
-.modal-content button {
-    width: 100%;
-    padding: 0.75rem;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.modal-content button:hover {
-    background: #5a67d8;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(50px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-function showSkeletonLoader() {
-    const container = document.getElementById('habits-list');
-    container.innerHTML = `
-        <div class="skeleton skeleton-card"></div>
-        <div class="skeleton skeleton-card"></div>
-        <div class="skeleton skeleton-card"></div>
-    `;
-}
