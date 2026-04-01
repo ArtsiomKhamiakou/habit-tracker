@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupModal();
     setupThemeToggle();
     setupClearAllButton();
+    setupSearch();
 });
 
 let currentPage = 1;
@@ -72,6 +73,31 @@ function displayPagination(data) {
     
     html += '</div>';
     paginationContainer.innerHTML = html;
+}
+
+// ФУНКЦИЯ ПОИСКА
+function setupSearch() {
+    const searchInput = document.getElementById('search-input');
+    if (!searchInput) return;
+    
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        filterHabits(searchTerm);
+    });
+}
+
+function filterHabits(searchTerm) {
+    if (!searchTerm) {
+        displayHabits(allHabits);
+        return;
+    }
+    
+    const filtered = allHabits.filter(habit => 
+        habit.name.toLowerCase().includes(searchTerm) ||
+        (habit.description && habit.description.toLowerCase().includes(searchTerm))
+    );
+    
+    displayHabits(filtered);
 }
 
 function escapeHtml(text) {
@@ -283,7 +309,6 @@ function displayStats(stats) {
     `;
 }
 
-// Функция для кнопки "Очистить все привычки"
 function setupClearAllButton() {
     const clearBtn = document.getElementById('clear-all-btn');
     if (!clearBtn) return;
@@ -325,7 +350,6 @@ function setupClearAllButton() {
     });
 }
 
-// Добавляем стили для анимаций
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideIn {
